@@ -1,0 +1,21 @@
+[project]
+name = "vercel-mgmt"
+version = "0.1.0"
+description = "Cancel multiple builds right from the terminal"
+readme = "README.md"
+authors = [
+    { name = "Federico del Mazo", email = "fdelmazo@fi.uba.ar" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "textual>=5.3.0",
+    "textual-dev>=1.7.0",
+]
+
+[project.scripts]
+vercel-mgmt = "vercel_mgmt:main"
+
+[build-system]
+requires = ["uv_build>=0.8.12,<0.9.0"]
+build-backend = "uv_build"
