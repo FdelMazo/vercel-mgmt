@@ -6,6 +6,8 @@ Cancel multiple builds right from the terminal
 uvx vercel-mgmt -t <bearer_token> -tid <team_id>
 ```
 
+![](example.png)
+
 ```
 ## DEBUGGING
 # terminal 1
