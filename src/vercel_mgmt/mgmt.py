@@ -1,6 +1,7 @@
 from textual import work, on
 from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, LoadingIndicator, DataTable
+from rich.text import Text
 from vercel_mgmt.vercel import Vercel
 import argparse
 import humanize
@@ -12,6 +13,7 @@ class VercelMGMT(App):
     SUB_TITLE = "Non-production builds"
     BINDINGS = [
         ("q", "quit", "Quit"),
+        ("c", "cancel", "Cancel Selected Deployments"),
     ]
 
     def __init__(self, vercel: Vercel):
@@ -23,20 +25,13 @@ class VercelMGMT(App):
         yield Header()
         yield LoadingIndicator()
         yield DataTable()
-        yield Footer()
+        yield Footer(show_command_palette=False)
 
     def on_mount(self) -> None:
+        self.create_table()
         self.load_deployments()
 
-    @work(exclusive=True)
-    async def load_deployments(self) -> None:
-        deployments = await self.vercel.deployments(
-            state="QUEUED,BUILDING,READY", target="preview"
-        )
-        self.query_one(LoadingIndicator).remove()
-        self.populate_table(deployments)
-
-    def populate_table(self, deployments: list[dict]) -> None:
+    def create_table(self) -> None:
         table = self.query_one(DataTable)
         table.cursor_type = "row"
 
@@ -47,33 +42,68 @@ class VercelMGMT(App):
         table.add_column("creator", key="creator")
         table.add_column("branch", key="branch")
         table.add_column("commit", key="commit")
-        for deployment in deployments:
-            table.add_row(
-                " ",
-                humanize.naturaltime(
-                    datetime.fromtimestamp(int(deployment["created"]) / 1000)
-                ),
-                deployment["state"],
-                deployment["name"],
-                deployment["creator"]["username"],
-                deployment["meta"]["githubCommitRef"],
-                deployment["meta"]["githubCommitMessage"][:50]
-                + (
-                    "..." if len(deployment["meta"]["githubCommitMessage"]) > 50 else ""
-                ),
-                key=deployment["uid"],
-            )
+
+    def action_cancel(self) -> None:
+        if not self.selected_deployments:
+            return
+
+        self.query_one(LoadingIndicator).display = True
+        self.cancel_deployments()
 
     @on(DataTable.RowSelected)
     def toggle_row_selection(self, event: DataTable.RowSelected) -> None:
         table = event.control
         row_key = event.row_key
-        if row_key in self.selected_deployments:
-            self.selected_deployments.remove(row_key)
+        deployment_id = row_key.value
+        if deployment_id in self.selected_deployments:
+            self.selected_deployments.remove(deployment_id)
             table.update_cell(row_key, "selected", " ")
         else:
-            self.selected_deployments.add(row_key)
+            self.selected_deployments.add(deployment_id)
             table.update_cell(row_key, "selected", "✔")
+
+    @work(exclusive=True)
+    async def load_deployments(self) -> None:
+        deployments = await self.vercel.deployments(
+            state="QUEUED,BUILDING", target="preview"
+        )
+        self.query_one(LoadingIndicator).display = False
+        table = self.query_one(DataTable)
+        table.clear()
+        for deployment in deployments:
+            table.add_row(
+                Text(" "),
+                Text(
+                    humanize.naturaltime(
+                        datetime.fromtimestamp(int(deployment["created"]) / 1000)
+                    ),
+                    style="cyan",
+                ),
+                Text(
+                    deployment["state"],
+                    style="yellow" if deployment["state"] == "BUILDING" else None,
+                ),
+                Text(deployment["name"]),
+                Text(deployment["creator"]["username"], style="italic green"),
+                Text(deployment["meta"]["githubCommitRef"], style="lightblue"),
+                Text(
+                    deployment["meta"]["githubCommitMessage"][:50]
+                    + (
+                        "..."
+                        if len(deployment["meta"]["githubCommitMessage"]) > 50
+                        else ""
+                    ),
+                ),
+                key=deployment["uid"],
+            )
+
+    @work(exclusive=True)
+    async def cancel_deployments(self) -> None:
+        deployment_ids = list(self.selected_deployments)
+        success = await self.vercel.cancel_deployments(deployment_ids)
+        if success:
+            self.selected_deployments.clear()
+        self.load_deployments()
 
 
 def main():
