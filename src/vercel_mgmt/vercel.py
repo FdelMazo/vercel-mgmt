@@ -1,5 +1,5 @@
 import httpx
-from typing import Optional, Literal
+from typing import Optional
 
 
 API_BASE = "https://api.vercel.com/v6"
@@ -13,9 +13,8 @@ class Vercel:
     async def deployments(
         self,
         *,
-        state: Optional[
-            Literal["BUILDING", "ERROR", "INITIALIZING", "QUEUED", "READY", "CANCELED"]
-        ] = None,
+        state: Optional[str] = None,
+        target: Optional[str] = None,
     ):
         url = f"{API_BASE}/deployments"
         headers = {
@@ -25,6 +24,7 @@ class Vercel:
         params = {
             "teamId": self.team_id,
             "state": state,
+            "target": target,
         }
 
         async with httpx.AsyncClient() as client:
