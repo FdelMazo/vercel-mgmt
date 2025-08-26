@@ -26,6 +26,7 @@ class Vercel:
             "teamId": self.team_id,
             "state": state,
             "target": target,
+            "limit": 100,
         }
 
         async with httpx.AsyncClient() as client:
