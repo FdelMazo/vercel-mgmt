@@ -62,6 +62,10 @@ class VercelMGMT(App):
             self.selected_deployments.add(deployment_id)
             table.update_cell(row_key, "selected", "✔")
 
+        row_idx, _ = table.cursor_coordinate
+        if row_idx < len(table.rows) - 1:
+            table.move_cursor(row=row_idx + 1)
+
     @work(exclusive=True)
     async def load_deployments(self) -> None:
         deployments = await self.vercel.deployments(
