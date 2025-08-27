@@ -13,6 +13,7 @@ class VercelMGMT(App):
     SUB_TITLE = "Non-production builds"
     BINDINGS = [
         ("q", "quit", "Quit"),
+        ("r", "refresh", "Refresh"),
         ("c", "cancel", "Cancel Selected Deployments"),
     ]
 
@@ -49,6 +50,11 @@ class VercelMGMT(App):
 
         self.query_one(LoadingIndicator).display = True
         self.cancel_deployments()
+
+    def action_refresh(self) -> None:
+        self.query_one(LoadingIndicator).display = True
+        self.selected_deployments.clear()
+        self.load_deployments()
 
     @on(DataTable.RowSelected)
     def toggle_row_selection(self, event: DataTable.RowSelected) -> None:
@@ -104,9 +110,8 @@ class VercelMGMT(App):
     @work(exclusive=True)
     async def cancel_deployments(self) -> None:
         deployment_ids = list(self.selected_deployments)
-        success = await self.vercel.cancel_deployments(deployment_ids)
-        if success:
-            self.selected_deployments.clear()
+        await self.vercel.cancel_deployments(deployment_ids)
+        self.selected_deployments.clear()
         self.load_deployments()
 
 
