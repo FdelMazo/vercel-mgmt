@@ -1,6 +1,7 @@
 import httpx
 import asyncio
 from typing import Optional
+import webbrowser
 
 
 API_BASE = "https://api.vercel.com"
@@ -10,6 +11,7 @@ class Vercel:
     def __init__(self, bearer_token: str, team_id: Optional[str] = None):
         self.bearer_token = bearer_token
         self.team_id = team_id
+        self._deployments = {}
 
     async def deployments(
         self,
@@ -29,6 +31,7 @@ class Vercel:
             "limit": 100,
         }
 
+        self._deployments = {}
         async with httpx.AsyncClient() as client:
             request = client.build_request("GET", url, headers=headers, params=params)
             print(f"REQUEST: {request.method} {request.url}")
@@ -37,7 +40,10 @@ class Vercel:
             json = response.json()
             print(f"RESPONSE: {response.status_code} {json}")
 
-            return json["deployments"]
+            for deployment in json["deployments"]:
+                self._deployments[deployment["uid"]] = deployment
+
+            return self._deployments
 
     async def cancel_deployments(
         self,
@@ -77,3 +83,7 @@ class Vercel:
                 print(f"RESPONSE: {response.status_code} {response.json()}")
 
         return all(r.status_code == 200 for r in responses)
+
+    def open_deployment(self, deployment_id: str):
+        deployment = self._deployments[deployment_id]
+        webbrowser.open(deployment["inspectorUrl"])

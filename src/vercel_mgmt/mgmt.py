@@ -14,6 +14,7 @@ class VercelMGMT(App):
     BINDINGS = [
         ("q", "quit", "Quit"),
         ("r", "refresh", "Refresh"),
+        ("space", "open", "Open Deployment"),
         ("c", "cancel", "Cancel Selected Deployments"),
     ]
 
@@ -56,6 +57,13 @@ class VercelMGMT(App):
         self.selected_deployments.clear()
         self.load_deployments()
 
+    def action_open(self) -> None:
+        table = self.query_one(DataTable)
+        if not len(table.rows):
+            return
+        row_key, _ = table.coordinate_to_cell_key(table.cursor_coordinate)
+        self.vercel.open_deployment(row_key)
+
     @on(DataTable.RowSelected)
     def toggle_row_selection(self, event: DataTable.RowSelected) -> None:
         table = event.control
@@ -80,7 +88,7 @@ class VercelMGMT(App):
         self.query_one(LoadingIndicator).display = False
         table = self.query_one(DataTable)
         table.clear()
-        for deployment in deployments:
+        for deployment_id, deployment in deployments.items():
             table.add_row(
                 Text(" "),
                 Text(
@@ -104,7 +112,7 @@ class VercelMGMT(App):
                         else ""
                     ),
                 ),
-                key=deployment["uid"],
+                key=deployment_id,
             )
 
     @work(exclusive=True)
