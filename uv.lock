@@ -616,7 +616,7 @@ wheels = [
 
 [[package]]
 name = "vercel-mgmt"
-version = "0.1.5"
+version = "0.1.7"
 source = { editable = "." }
 dependencies = [
     { name = "httpx" },

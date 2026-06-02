@@ -16,6 +16,7 @@ class VercelMGMT(App):
         ("r", "refresh", "Refresh"),
         ("space", "open", "Open Deployment"),
         ("c", "cancel", "Cancel Selected Deployments"),
+        ("k", "keep", "Keep Only Selected Deployments"),
     ]
 
     def __init__(self, vercel: Vercel):
@@ -51,6 +52,13 @@ class VercelMGMT(App):
 
         self.query_one(LoadingIndicator).display = True
         self.cancel_deployments()
+
+    def action_keep(self) -> None:
+        if not self.selected_deployments:
+            return
+
+        self.query_one(LoadingIndicator).display = True
+        self.keep_only()
 
     def action_refresh(self) -> None:
         self.query_one(LoadingIndicator).display = True
@@ -123,6 +131,14 @@ class VercelMGMT(App):
         self.selected_deployments.clear()
         self.load_deployments()
 
+    @work(exclusive=True)
+    async def keep_only(self) -> None:
+        rows_keys= self.query_one(DataTable).rows.keys()
+        all_deployment_ids = [row_key.value for row_key in rows_keys]
+        deployment_ids = list(set(all_deployment_ids) - self.selected_deployments)
+        await self.vercel.cancel_deployments(deployment_ids)
+        self.selected_deployments.clear()
+        self.load_deployments()
 
 def main():
     parser = argparse.ArgumentParser(description="Vercel Management Tool")
