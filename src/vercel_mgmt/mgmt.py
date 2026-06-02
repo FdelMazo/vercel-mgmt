@@ -89,16 +89,17 @@ class VercelMGMT(App):
         table = self.query_one(DataTable)
         table.clear()
         for deployment_id, deployment in deployments.items():
+            createdAt = datetime.fromtimestamp(int(deployment["created"]) / 1000)
+            buildingAt = datetime.fromtimestamp(int(deployment["buildingAt"]) / 1000) if deployment.get('buildingAt') else None
+
             table.add_row(
                 Text(" "),
                 Text(
-                    humanize.naturaltime(
-                        datetime.fromtimestamp(int(deployment["created"]) / 1000)
-                    ),
+                    humanize.naturaltime(createdAt),
                     style="cyan",
                 ),
                 Text(
-                    deployment["state"],
+                    deployment["state"] + (f" ({int((datetime.now() - buildingAt).total_seconds() / 60)}m)" if deployment["state"] == "BUILDING" else ''),
                     style="yellow" if deployment["state"] == "BUILDING" else None,
                 ),
                 Text(deployment["name"]),
