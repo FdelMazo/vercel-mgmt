@@ -1,11 +1,16 @@
 from textual import work, on
 from textual.app import App, ComposeResult
+from textual.binding import Binding
 from textual.widgets import Header, Footer, LoadingIndicator, DataTable
 from rich.text import Text
 from vercel_mgmt.vercel import Vercel
 import argparse
 import humanize
+import os
 from datetime import datetime
+
+
+VI_MODE = os.environ.get("VI_MODE", "").lower() in ("1", "true", "yes", "on")
 
 
 class VercelMGMT(App):
@@ -16,8 +21,13 @@ class VercelMGMT(App):
         ("r", "refresh", "Refresh"),
         ("space", "open", "Open Deployment"),
         ("c", "cancel", "Cancel Selected Deployments"),
-        ("k", "keep", "Keep Only Selected Deployments"),
-    ]
+        ("K" if VI_MODE else "k", "keep", "Keep Only Selected Deployments"),
+    ] + ([
+        Binding("j", "cursor_down", "Down", show=False),
+        Binding("k", "cursor_up", "Up", show=False),
+        Binding("g", "cursor_top", "Top", show=False),
+        Binding("G", "cursor_bottom", "Bottom", show=False),
+    ] if VI_MODE else [])
 
     def __init__(self, vercel: Vercel):
         super().__init__()
@@ -64,6 +74,19 @@ class VercelMGMT(App):
         self.query_one(LoadingIndicator).display = True
         self.selected_deployments.clear()
         self.load_deployments()
+
+    def action_cursor_down(self) -> None:
+        self.query_one(DataTable).action_cursor_down()
+
+    def action_cursor_up(self) -> None:
+        self.query_one(DataTable).action_cursor_up()
+
+    def action_cursor_top(self) -> None:
+        self.query_one(DataTable).move_cursor(row=0)
+
+    def action_cursor_bottom(self) -> None:
+        table = self.query_one(DataTable)
+        table.move_cursor(row=len(table.rows) - 1)
 
     def action_open(self) -> None:
         table = self.query_one(DataTable)
