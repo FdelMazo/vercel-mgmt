@@ -8,7 +8,7 @@ uvx vercel-mgmt -t <bearer_token> -tid <team_id>
 
 ![](example.png)
 
-Set `VI_MODE=True` for vim navigation (`j`/`k` to move, `g`/`G` for top/bottom). In vim mode "keep only" moves from `k` to `K`.
+Set `VI_MODE=True` for vim navigation (`j`/`k` to move, `g`/`G` for top/bottom).
 
 ```
 VI_MODE=True uvx vercel-mgmt -t <bearer_token> -tid <team_id>
