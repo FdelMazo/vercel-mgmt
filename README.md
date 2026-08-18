@@ -3,6 +3,8 @@
 Cancel multiple builds right from the terminal
 
 ```
+VERCEL_TOKEN=<bearer_token> VERCEL_TEAM_ID=<team_id> uvx vercel-mgmt
+or
 uvx vercel-mgmt -t <bearer_token> -tid <team_id>
 ```
 

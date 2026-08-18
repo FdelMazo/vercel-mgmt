@@ -1,6 +1,6 @@
 [project]
 name = "vercel-mgmt"
-version = "0.1.8"
+version = "0.1.9"
 description = "Cancel multiple builds right from the terminal"
 readme = "README.md"
 authors = [

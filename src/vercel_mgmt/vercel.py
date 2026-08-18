@@ -36,6 +36,7 @@ class Vercel:
 
             return response
 
+    # Get a deployment list from the API and populate the internal state
     async def deployments(
         self,
         *,
@@ -82,3 +83,8 @@ class Vercel:
     def open_deployment(self, deployment_id: str):
         deployment = self._deployments[deployment_id]
         webbrowser.open(deployment["inspectorUrl"])
+
+    # Get a single deployment from the API
+    async def deployment(self, deployment_id: str):
+        response = await self._request("GET", f"/v13/deployments/{deployment_id}")
+        return response.json()
