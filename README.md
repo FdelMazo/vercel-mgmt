@@ -24,6 +24,7 @@ uv run textual run --dev ./src/vercel_mgmt/mgmt.py -t <bearer_token> -tid <team_
 
 ```
 ## Updating
+# update the version on pyproject.toml
 uv lock
 uv build
 uv publish
